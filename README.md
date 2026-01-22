@@ -87,29 +87,21 @@
 <img width="2501" height="1312" alt="image" src="https://github.com/user-attachments/assets/2deb42c4-e370-4bd5-b6e1-98817b3cfa11" />
 
 ## 5. 기술 스택 (Tech Stack)
-- Backend
+- Backend<br>
+   Java (Spring 기반)
+  
+- Frontend<br>
+   Languages/Tools: HTML5, CSS3, JavaScript<br> 
+   Template Engine: Thymeleaf<br>
 
-   Language: Java 17 
+- Database<br>
+   H2 Console
 
-   Framework: Spring Boot 3.x 
+- Collaboration<br>
+   Notion
 
-   Database: MySQL 
-
-   ORM: Spring Data JPA 
-
-- Frontend
-
-   Languages/Tools: HTML5, CSS3, JavaScript (ES6+), Bootstrap 
-
-   Template Engine: Thymeleaf 
- 
-   Infrastructure & DevOps
-
-   Cloud: AWS (EC2, RDS) 
-
-   Server: Nginx, Ubuntu 22.04 LTS 
-
-   CI/CD: GitHub Actions 
+- Development Tool<br>
+   STS4 (Spring Tool Suite 4)
 
 
 
