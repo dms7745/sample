@@ -35,6 +35,8 @@ import com.mysite.sbb.level.Level;
 import com.mysite.sbb.level.LevelService;
 import com.mysite.sbb.quiz.Quiz;
 import com.mysite.sbb.quiz.QuizRepository;
+import com.mysite.sbb.review.Review;
+import com.mysite.sbb.review.ReviewService;
 import com.mysite.sbb.user.User;
 import com.mysite.sbb.user.UserRole;
 import com.mysite.sbb.user.UserService;
@@ -52,6 +54,7 @@ public class ClassesController {
 	private final LevelService lService;
 	private final EnrollmentService eService;
 	private final QuizRepository quizr;
+        private final ReviewService reviewService;
 
 	// 강의 등록 페이지(관리자/강사용)
 	@PreAuthorize("hasRole('ROLE_INSTRUCTOR') or hasRole('ROLE_ADMIN')") // 관리자 or 강사만
@@ -236,6 +239,17 @@ public class ClassesController {
 		model.addAttribute("isEnrolled", isEnrolled);
 		model.addAttribute("isCompleted", isCompleted);
 		model.addAttribute("enrollmentCount", enrollmentCount);
+
+                // 리뷰 데이터 추가
+                List<Review> reviews = reviewService.getReviewsByClasses(classes);
+                model.addAttribute("reviews", reviews);
+                model.addAttribute("averageRating", reviewService.getAverageRating(classes));
+                model.addAttribute("reviewCount", reviewService.getReviewCount(classes));
+                
+                // 현재 사용자가 리뷰 작성 가능한지
+                User currentUser = (principal != null) ? uService.getUser(principal.getName()) : null;
+                model.addAttribute("canWriteReview", reviewService.canWriteReview(classes, currentUser));
+                model.addAttribute("currentUser", currentUser);
 
 		return "classes_detail";
 	}

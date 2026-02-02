@@ -16,16 +16,16 @@ import com.mysite.sbb.user.User;
 
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>{
 
-	// [수정] 사용자 기준으로 신청 목록 찾기 (페이징)
-	Page<Enrollment> findByUser(User user, Pageable pageable);
-	
-	// [추가] 완료/진행중 페이징
-	Page<Enrollment> findByUserAndCompleted(User user, boolean completed, Pageable pageable);
-	
-	// 특정 회원의 신청 내역
-	List<Enrollment> findByUser_Uno(Long uno); 
-	
-	// 특정 강의의 신청자 목록
+    // [수정] 사용자 기준으로 신청 목록 찾기 (페이징)
+    Page<Enrollment> findByUser(User user, Pageable pageable);
+
+    // [추가] 완료/진행중 페이징
+    Page<Enrollment> findByUserAndCompleted(User user, boolean completed, Pageable pageable);
+    
+    // 특정 회원의 신청 내역
+    List<Enrollment> findByUser_Uno(Long uno); 
+
+    // 특정 강의의 신청자 목록
     List<Enrollment> findByClasses(Classes classes); 
     
     // 특정 회원의 특정 강의 신청
@@ -39,6 +39,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>{
     
     // 사용자와 강의 객체로 수강 정보 조회 (수강 완료 처리를 위함)
     Optional<Enrollment> findByUserAndClasses(User user, Classes classes);
+    
+    // 강의와 사용자로 수강 정보 조회 (리뷰 작성 가능 여부 확인용)
+    Optional<Enrollment> findByClassesAndUser(Classes classes, User user);
     
     // 강사 ID(uno)로 수강내역 목록 조회 (수강생 관리 위함)
     List<Enrollment> findByClasses_User_Uno(Long instructorUno);
@@ -62,7 +65,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>{
             "GROUP BY e.classes.classesId")
     List<Object[]> countEnrollmentsByClasses(@Param("classes") List<Classes> classes);
     
- // [추가] 특정 강의의 수강생 목록 조회 (검색 + 페이징)
+    // [추가] 특정 강의의 수강생 목록 조회 (검색 + 페이징)
     @Query("select e from Enrollment e "
             + "where e.classes.classesId = :classesId "
             + "and (lower(e.user.userName) like lower(concat('%', :kw, '%')) "

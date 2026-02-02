@@ -1,0 +1,5 @@
+File /opt/lms/lms-project/local.mv.db, 77824 bytes, 0 MB
+00000 fileHeader H:2,block:12,blockSize:1000,chunk:56,clean:1,created:19be6eab7f9,format:3,version:56,fletcher:33730d83
+01000 fileHeader H:2,block:12,blockSize:1000,chunk:56,clean:1,created:19be6eab7f9,format:3,version:56,fletcher:33730d83
+
+02000 chunkHeader chunk:fa,block:0,len:1e,pages:ad,max:20e00,map:67,next:2b,root:3e8000716ac3,time:19a3805,version:fa,toc:1cc4a

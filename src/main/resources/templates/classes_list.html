@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title>강의 목록</title>
+</head>
+
+<body>
+    <th:block layout:fragment="content">
+        <!-- 등급업 테스트 진행률 (로그인한 수강생만) -->
+        <div class="card shadow-sm mb-4" 
+             sec:authorize="hasRole('ROLE_LEARNER')"
+             th:if="${currentUser != null}">
+            <div class="card-body d-flex align-items-center">
+                <div class="me-4">
+                    <i class="bi bi-person-workspace display-3 text-primary"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="text-muted">현재 등급 및 이용 현황</div>
+                    <h4 class="fw-bold mb-3">
+                        <span th:text="${currentUser?.level?.levelName ?: '비회원'}">초급</span>
+                        
+                        <span th:if="${currentUser != null and currentUser.isPaid}"
+                              class="badge bg-warning text-dark ms-2">
+                            VIP (모든 강의 시청가능)
+                        </span>
+                        
+                        <span th:if="${currentUser != null and !currentUser.isPaid}"
+                              class="badge ms-2"
+                              th:classappend="${currentUser.endDate.isBefore(#temporals.createNow())} ? 'bg-danger' : 'bg-success'">
+                            
+                            <span th:if="${currentUser.endDate.isAfter(#temporals.createNow())}"
+                                  th:text="|무료체험: ${#temporals.format(currentUser.endDate, 'yyyy-MM-dd')}까지|"></span>
+                            
+                            <span th:if="${currentUser.endDate.isBefore(#temporals.createNow())}">
+                                무료체험 만료됨
+                            </span>
+                        </span>
+                    </h4>
+                    <!-- 고급 레벨(3)이 아닐 때만 진행률 표시 -->
+                    <th:block th:unless="${currentUser != null and currentUser.level?.levelId == 3}">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-bold">진행 상황 (현재 등급)</span>
+                            <span class="text-muted">
+                                <span th:text="${completedCount != null ? completedCount : 0}">0</span> /
+                                <span th:text="${totalCount != null ? totalCount : 10}">10</span> 강의
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar"
+                                 th:style="'width:' + (${progressPercent == null ? 0 : progressPercent}) + '%;'"
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </th:block>
+                    <!-- 최고 등급인 경우 -->
+                    <div th:if="${currentUser != null and currentUser.level?.levelId == 3}" class="form-text mt-2">
+                        <i class="bi bi-star-fill me-1"></i>
+                        <span>현재 최고 등급입니다.</span>
+                    </div>
+                    <!-- 등급업까지 남은 강의 수 -->
+                    <div th:unless="${currentUser != null and currentUser.level?.levelId == 3}" class="form-text mt-2">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        등급업 테스트까지 <span th:text="${(totalCount - completedCount < 0) ? 0 : (totalCount - completedCount)}"></span>개 강의 남았습니다.
+                    </div>
+                </div>
+                <!-- 등급업 테스트 버튼 -->
+                <div th:if="${promotionTestEligible}" class="ms-4">
+                    <a th:href="@{/quiz_attempt/start/{quizId}(quizId=${promotionTestQuizId})}"
+                       class="btn btn-success">등급업 테스트 응시하기</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 검색 및 필터 -->
+        <form th:action="@{/classes/list}" method="get" class="mb-4">
+            <div class="row g-2 align-items-end justify-content-center">
+                <div class="col-md-2">
+                    <label class="form-label">검색 유형</label>
+                    <select name="searchType" class="form-select">
+                        <option value="title" th:selected="${searchType == 'title'}">제목</option>
+                        <option value="instructor" th:selected="${searchType == 'instructor'}">강사명</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">검색어</label>
+                    <input type="text" name="kw" class="form-control" 
+                           th:value="${kw}" placeholder="검색어 입력">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">난이도</label>
+                    <select name="levelId" class="form-select">
+                        <option value="0" th:selected="${levelId == 0}">전체</option>
+                        <option th:each="level : ${levels}" 
+                                th:value="${level.levelId}" 
+                                th:text="${level.levelName}"
+                                th:selected="${level.levelId == levelId}">초급</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">검색</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- 강의 목록 -->
+        <div class="row">
+            <div th:each="classes : ${paging.content}" class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <img th:src="${classes.classesImg != null && !classes.classesImg.isEmpty() ? classes.classesImg : '/images/default_class.png'}"
+                         class="card-img-top" alt="강의 썸네일" 
+                         style="height: 180px; object-fit: cover;"
+                         onerror="this.src='/images/default_class.png'">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a th:href="@{/classes/{id}(id=${classes.classesId})}" 
+                               th:text="${classes.title}" 
+                               class="text-decoration-none">강의 제목</a>
+                        </h5>
+                        <p class="card-text text-muted" th:text="${classes.user?.userName}">강사명</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info" th:text="${classes.level?.levelName}">초급</span>
+                            <small class="text-muted" th:text="'수강생 ' + (${enrollmentCountMap[classes.classesId]} ?: 0) + '명'">수강생 0명</small>
+                        </div>
+                        <!-- 수강 상태 표시 -->
+                        <div th:if="${enrollmentStatusMap != null && enrollmentStatusMap[classes.classesId] != null}" class="mt-2">
+                            <span th:if="${enrollmentStatusMap[classes.classesId] == 'COMPLETED'}" 
+                                  class="badge bg-success">수강 완료</span>
+                            <span th:if="${enrollmentStatusMap[classes.classesId] == 'ENROLLED'}" 
+                                  class="badge bg-primary">수강 중</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 강의가 없을 때 -->
+        <div th:if="${paging.content.isEmpty()}" class="text-center py-5">
+            <p class="text-muted">등록된 강의가 없습니다.</p>
+        </div>
+
+        <!-- 페이지네이션 (5페이지씩) -->
+        <nav th:if="${!paging.content.isEmpty()}" aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- 이전 5페이지 그룹으로 이동 -->
+                <th:block th:with="startPage=${(paging.number / 5) * 5}, endPage=${startPage + 4 < paging.totalPages - 1 ? startPage + 4 : paging.totalPages - 1}">
+                    <li class="page-item" th:classappend="${startPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/classes/list(page=${startPage - 1}, searchType=${searchType}, kw=${kw}, levelId=${levelId})}">&laquo;</a>
+                    </li>
+                    
+                    <!-- 페이지 번호 (5개씩) -->
+                    <th:block th:each="page : ${#numbers.sequence(startPage, endPage)}">
+                        <li class="page-item" th:classappend="${page == paging.number} ? 'active'">
+                            <a class="page-link" th:href="@{/classes/list(page=${page}, searchType=${searchType}, kw=${kw}, levelId=${levelId})}" th:text="${page + 1}">1</a>
+                        </li>
+                    </th:block>
+                    
+                    <!-- 다음 5페이지 그룹으로 이동 -->
+                    <li class="page-item" th:classappend="${endPage >= paging.totalPages - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/classes/list(page=${endPage + 1}, searchType=${searchType}, kw=${kw}, levelId=${levelId})}">&raquo;</a>
+                    </li>
+                </th:block>
+            </ul>
+        </nav>
+    </th:block>
+</body>
+</html>
